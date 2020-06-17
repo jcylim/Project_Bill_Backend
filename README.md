@@ -1,4 +1,4 @@
-## Source code for Project Bill Backend
+## Source code for Workflow Backend
 
 ### To run this project, do the following:
 
