@@ -1,17 +1,15 @@
 const mongoose = require('mongoose');
-const uuidv1 = require('uuid/v1');
+const { v1: uuidv1 } = require('uuid');
 const crypto = require('crypto');
 const { ObjectId } = mongoose.Schema;
 
-const userSchema = new mongoose.Schema({
-    first_name: {
+const companySchema = new mongoose.Schema({
+    name: {
         type: String,
-        trim: true,
         required: true
     },
-    last_name: {
+    about: {
         type: String,
-        trim: true,
         required: true
     },
     email: {
@@ -23,36 +21,45 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    title: {
-        type: String,
-        default: "No Title Assigned"
-    },
-    company: {
-        type: ObjectId, 
-        ref: 'Company'
-    },
-    salt: String,
-    created: {
-        type: Date,
-        default: Date.now
-    },
-    updated: Date,
     photo: {
         data: Buffer,
         contentType: String
     },
+    created: {
+        type: Date,
+        default: Date.now
+    },
+    salt: String,
+    updated: Date,
+    role: {
+        type: String,
+        default: "admin"
+    },
+    comments: [{
+        text: String,
+        created: {type: Date, default: Date.now()}, 
+        postedBy: {type: ObjectId, ref: 'User'}
+    }],
+    // tasks: [{
+    //     type: ObjectId, 
+    //     ref: 'Task'
+    // }],
+    // employees: [{
+    //     type: ObjectId,
+    //     ref: 'User'
+    // }],
+    // customers: [{
+    //     type: ObjectId, 
+    //     ref: 'Customer'
+    // }],
     resetPasswordLink: {
         data: String,
         default: ''
-    },
-    role: {
-        type: String,
-        default: "employee"
     }
 });
 
 // virtual fields
-userSchema.virtual('password')
+companySchema.virtual('password')
 .set(function(password) {
     this._password = password;
     this.salt = uuidv1();
@@ -62,13 +69,8 @@ userSchema.virtual('password')
     return this._password;
 });
 
-userSchema.virtual('id')
-.get(function() {
-    return this._id;
-});
-
 // methods
-userSchema.methods = {
+companySchema.methods = {
     authenticate: function(pW) {
         return this.encryptPassword(pW) == this.hashed_password;
     },
@@ -84,4 +86,4 @@ userSchema.methods = {
     }
 };
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("Company", companySchema);

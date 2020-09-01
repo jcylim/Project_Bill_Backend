@@ -21,9 +21,12 @@ mongoose.connection.on('error', err => {
 });
 
 // bring in routes
-const postRouter = require('./routes/post');
+const companyRouter = require('./routes/company');
 const authRouter = require('./routes/auth');
+const taskRouter = require('./routes/task');
 const userRouter = require('./routes/user');
+const customerRouter = require('./routes/customer');
+const handshakeRouter = require('./routes/handshake');
 
 // API docs
 app.get('/', (req, res) => {
@@ -44,9 +47,12 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(expressValidator());
 app.use(cors());
-app.use('/', postRouter);
 app.use('/', authRouter);
+app.use('/', customerRouter);
+app.use('/', companyRouter);
 app.use('/', userRouter);
+app.use('/', taskRouter);
+app.use('/', handshakeRouter);
 app.use(function (err, req, res, next) {
     if (err.name === 'UnauthorizedError') {
       res.status(401).json({error: 'Unauthorized to access this page'});

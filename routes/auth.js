@@ -2,24 +2,32 @@ const express = require('express');
 const { 
     signUp, 
     signIn, 
+    userSignIn,
     signOut,
     forgotPassword,
-    resetPassword 
+    resetPassword,
+    userForgotPassword,
+    userResetPassword
 } = require('../controllers/auth');
-const { userById } = require('../controllers/user');
-const { userSignUpValidator, passwordResetValidator } = require('../validator');
+const { companySignUpValidator, passwordResetValidator } = require('../validator');
 
 const router = express.Router();
 
 // password forgot and reset routes
-router.put("/forgot-password", forgotPassword);
-router.put("/reset-password", passwordResetValidator, resetPassword);
+router.put("/root/forgot-password", forgotPassword);
+router.put("/root/reset-password", passwordResetValidator, resetPassword);
 
-router.post('/signup', userSignUpValidator, signUp);
-router.post('/signin', signIn);
+// password forgot and reset routes for users
+router.put("/forgot-password", userForgotPassword);
+router.put("/reset-password", passwordResetValidator, userResetPassword);
+
+// root signup, signin
+router.post('/root/signup', companySignUpValidator, signUp);
+router.post('/root/signin', signIn);
+
+// company specific signin
+router.post('/signin', userSignIn);
+
 router.get('/signout', signOut);
-
-// any route containing userId, our will first execute userById()
-router.param('userID', userById);
 
 module.exports = router;

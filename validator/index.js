@@ -1,16 +1,16 @@
-exports.createPostValidator = (req, res, next) => {
+exports.createTaskValidator = (req, res, next) => {
     // title
-    req.check('title', 'Write a title').notEmpty();
+    req.check('title', 'Write a task title').notEmpty();
     req.check('title', 'Title must be between 4 to 150 characters').isLength({
         min: 4,
         max: 150
     });
 
     // body
-    req.check('body', 'Write a body').notEmpty();
-    req.check('body', 'Body must be between 4 to 2000 characters').isLength({
+    req.check('about', 'Write a description for the task').notEmpty();
+    req.check('about', 'Body must be between 4 to 100 characters').isLength({
         min: 4,
-        max: 2000
+        max: 100
     });
 
     // check for errors
@@ -24,13 +24,16 @@ exports.createPostValidator = (req, res, next) => {
     next();
 };
 
-exports.userSignUpValidator = (req, res, next) => {
-    // username
-    req.check('username', 'Username is required').notEmpty();
-    req.check('username', 'Username must be between 4 to 15 characters').isLength({
+exports.companySignUpValidator = (req, res, next) => {
+    // name
+    req.check('name', 'Company name is required').notEmpty();
+    req.check('name', 'Company name must be between 4 to 15 characters').isLength({
         min: 4,
         max: 15
     });
+
+    // about
+    req.check('about', 'Company description is required').notEmpty();
 
     // email
     req.check('email', 'Email is required').notEmpty();
@@ -78,5 +81,63 @@ exports.passwordResetValidator = (req, res, next) => {
         return res.status(400).json({ error: firstError });
     }
     // proceed to next middleware or ...
+    next();
+};
+
+exports.createCustomerValidator = (req, res, next) => {
+    // name
+    req.check('name', 'Customer name is required').notEmpty();
+    req.check('name', 'Customer name must be between 4 to 20 characters').isLength({
+        min: 4,
+        max: 20
+    });
+
+    // about
+    req.check('about', 'Customer description is required').notEmpty();
+
+    // email
+    req.check('email', 'Email is required').notEmpty();
+    req.check('email', 'Email must be between 3 to 32 characters')
+    .matches(/.+\@.+\..+/)
+    .withMessage('Invalid email')
+    .isLength({
+        min: 3,
+        max: 32
+    });
+
+    // check for errors
+    const errors = req.validationErrors()
+    if (errors) {
+        const firstError = errors.map(err => err.msg)[0];
+        return res.status(400).json({error: firstError})
+    }
+
+    // proceed to next middleware
+    next();
+};
+
+exports.createHandshakeValidator = (req, res, next) => {
+    // title
+    req.check('title', 'Write a handshake title').notEmpty();
+    req.check('title', 'Title must be between 4 to 150 characters').isLength({
+        min: 4,
+        max: 150
+    });
+
+    // body
+    req.check('about', 'Write a description for the handshake').notEmpty();
+    req.check('about', 'Body must be between 4 to 100 characters').isLength({
+        min: 4,
+        max: 100
+    });
+
+    // check for errors
+    const errors = req.validationErrors()
+    if (errors) {
+        const firstError = errors.map(err => err.msg)[0];
+        return res.status(400).json({error: firstError})
+    }
+
+    // proceed to next middleware
     next();
 };

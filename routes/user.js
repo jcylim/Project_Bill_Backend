@@ -1,37 +1,33 @@
 const express = require('express');
+const { companyById } = require('../controllers/company');
 const { 
-    userById, 
-    allUsers, 
-    getUser, 
-    updateUser, 
-    deleteUser,
+    userById,
+    getUser,
+    updateUser,
+    removeUser, 
     userPhoto,
-    addFollowing,
-    addFollower,
-    removeFollowing,
-    removeFollower, 
-    findPeople,
-    hasAuthorization 
+    hasAuthorization,
+    isAdmin, 
 } = require('../controllers/user');
+const { unassignTask } = require('../controllers/task');
 const { requireSignIn } = require('../controllers/auth');
 
 const router = express.Router();
 
-router.put('/user/follow', requireSignIn, addFollowing, addFollower);
-router.put('/user/unfollow', requireSignIn, removeFollowing, removeFollower);
-
-router.get('/users', allUsers);
-router.get('/user/:userId', requireSignIn, getUser);
-router.put('/user/:userId', requireSignIn, hasAuthorization, updateUser);
-router.delete('/user/:userId', requireSignIn, hasAuthorization, deleteUser);
+// get user based on id
+// update user
+// remove user from company
+router.get("/:companyId/user/:userId", requireSignIn, getUser);
+router.put('/:companyId/user/:userId', requireSignIn, hasAuthorization, updateUser);
+router.delete("/:companyId/user/:userId", requireSignIn, isAdmin, removeUser, unassignTask);
+//router.delete('/:companyId/user/:userId', requireSignIn, isAdmin, removeUser, deleteUser);
 
 // photo 
-router.get('/user/photo/:userId', userPhoto);
-
-// who to follow
-router.get('/user/findpeople/:userId', requireSignIn, findPeople);
+router.get('/:companyId/user/photo/:userId', userPhoto);
 
 // any route containing :userId, our app will first execute userById()
 router.param('userId', userById);
+// any route containing companyById, our will first execute companyById()
+router.param('companyId', companyById);
 
 module.exports = router;
