@@ -3,7 +3,6 @@ const addressValidator = require('address-validator');
 const Address = addressValidator.Address;
 const phone = require('phone');
 const { isValid } = require('tin-validator');
-const User = require('../models/user');
 const Task = require('../models/task');
 const Company = require('../models/company');
 const Customer = require('../models/customer');
@@ -133,6 +132,124 @@ exports.addCustomer = async (req, res) => {
     //         return res.status(400).json({error: err});
     //     }
     // });
+};
+
+// checkIfCustomerExists = async customer => {
+//     const customerExists = await Customer.findOne({
+//         type: customer.type,
+//         name: customer.name,
+//         email: customer.email,
+//         company: customer.company
+//     });
+//     return customerExists;
+// };
+
+exports.addCustomers = (req, res) => {
+    const customers = req.body.customers;
+    var customerCounter = 0;
+    var errorCounter = customers.length*5;
+
+    customers.forEach(async customer => {
+        try {
+            const customerExists = await Customer.findOne({
+                type: customer.type,
+                name: customer.name,
+                email: customer.email,
+                company: customer.company
+            });
+    
+            if (customerExists) {
+                return res.status(403).json({
+                    error: 'One or more customer has already been created. Please verify.'
+                })
+            } else {
+                errorCounter--;
+            };
+            
+            // ssn/tin
+            if (!isValid(customer.tin)) {
+                return res.status(403).json({
+                    error: `Invalid entry of SSN/TIN for ${customer.name}`
+                });        
+            } else {
+                errorCounter--;
+            }
+        
+            // phone number
+            if (customer.cell) {
+                if (!(phone(customer.cell).length === 0)) {
+                    errorCounter--;
+                    customer.cell = phone(customer.cell)[0];
+                } else {
+                    return res.status(403).json({
+                        error: `Invalid cell number for ${customer.name}`
+                    });
+                }
+            } else {
+                errorCounter--;
+            }
+            if (customer.home) {
+                if (!(phone(customer.home).length === 0)) {
+                    errorCounter--;
+                    customer.home = phone(customer.home)[0];
+                } else {
+                    return res.status(403).json({
+                        error: `Invalid home number for ${customer.name}`
+                    });
+                }
+            } else {
+                errorCounter--;
+            }
+            if (customer.work) {
+                if (!(phone(customer.work).length === 0)) {
+                    errorCounter--;
+                    customer.work = phone(customer.work)[0];
+                } else {
+                    return res.status(403).json({
+                        error: `Invalid work number for ${customer.name}`
+                    });
+                }
+            } else {
+                errorCounter--;
+            }
+    
+            if (errorCounter == 0) {
+                customers.forEach(async customer => {
+                    var address = new Address({
+                        street: customer.street,
+                        city: customer.city,
+                        state: customer.state,
+                        country: customer.country
+                    });
+                
+                    _.omit(customer, ['street', 'city', 'state', 'country']);
+                
+                    let newCustomer = new Customer(customer);
+                    newCustomer.company = customer.company;
+                    newCustomer.address = address.toString();
+                    
+                    newCustomer.save((err, result) => {
+                        if (err) {
+                            return res.status(400).json({
+                                error: err
+                            });
+                        }
+                    });
+    
+                    customerCounter++;
+                });
+    
+                if (customerCounter == customers.length) {
+                    res.status(200).json({
+                        'message': 'Customers have all been added!'
+                    });
+                }
+            }
+        } catch (error) {
+            return res.status(400).json({ error });
+        }
+    });
+
 };
 
 exports.removeCustomer = async (req, res) => {
@@ -275,5 +392,21 @@ exports.uncomment = (req, res) => {
         } else {
             res.json(result);
         }
+    });
+};
+
+exports.convertToCustomer = (req, res) => {
+    const { isProspect } = req.body;
+    let customer = req.customer;
+
+    customer.isProspect = isProspect;
+    customer.converted = Date.now();
+    customer.save(err => {
+        if (err) {
+            return res.status(400).json({
+                error: "You are not authorized to perform this action"
+            });
+        }
+        res.status(200).json({ customer, message: `Converted prospect to customer` });
     });
 };

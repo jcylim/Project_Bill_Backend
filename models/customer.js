@@ -15,6 +15,11 @@ const customerSchema = new mongoose.Schema({
         trim: true,
         required: true
     },
+    isProspect: {
+        type: Boolean,
+        default: true,
+        required: true
+    },
     type: {
         type: String,
         required: true
@@ -65,7 +70,8 @@ const customerSchema = new mongoose.Schema({
         created: {type: Date, default: Date.now()}, 
         postedBy: {type: ObjectId, ref: 'User'}
     }],
-    updated: Date
+    updated: Date,
+    converted: Date
 });
 
 // virtual fields

@@ -38,7 +38,7 @@ exports.companySignUpValidator = (req, res, next) => {
     // email
     req.check('email', 'Email is required').notEmpty();
     req.check('email', 'Email must be between 3 to 32 characters')
-    .matches(/.+\@.+\..+/)
+    .matches(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)
     .withMessage('Invalid email')
     .isLength({
         min: 3,
@@ -98,7 +98,7 @@ exports.createCustomerValidator = (req, res, next) => {
     // email
     req.check('email', 'Email is required').notEmpty();
     req.check('email', 'Email must be between 3 to 32 characters')
-    .matches(/.+\@.+\..+/)
+    .matches(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)
     .withMessage('Invalid email')
     .isLength({
         min: 3,
@@ -111,6 +111,54 @@ exports.createCustomerValidator = (req, res, next) => {
         const firstError = errors.map(err => err.msg)[0];
         return res.status(400).json({error: firstError})
     }
+
+    // proceed to next middleware
+    next();
+};
+
+exports.createCustomersValidator = (req, res, next) => {
+    let customers = req.body.customers;
+    
+    customers.forEach(customer => {
+        // name
+        if (!customer.name) {
+            return res.status(403).json({
+                error: 'Customer name is required'
+            });
+        } else {
+            if (customer.name.length < 4 || customer.name.length > 20) {
+                return res.status(403).json({
+                    error: 'Customer name must be between 4 to 20 characters'
+                });
+            } 
+        }
+
+        // about
+        if (!customer.about) {
+            return res.status(403).json({
+                error: 'Customer description is required'
+            });
+        }
+
+        // email
+        if (!customer.email) {
+            return res.status(403).json({
+                error: 'Email is required'
+            });
+        } else {
+            const regex = new RegExp("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$");
+            if (customer.email.length < 3 || customer.email.length > 32) {
+                return res.status(403).json({
+                    error: 'Email must be between 3 to 32 characters'
+                });
+            }
+            if (!regex.test(customer.email)) {
+                return res.status(403).json({
+                    error: 'Invalid email'
+                });
+            }
+        }
+    });
 
     // proceed to next middleware
     next();
