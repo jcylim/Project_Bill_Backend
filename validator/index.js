@@ -25,17 +25,17 @@ exports.createPostValidator = (req, res, next) => {
 };
 
 exports.userSignUpValidator = (req, res, next) => {
-    // username
-    req.check('username', 'Username is required').notEmpty();
-    req.check('username', 'Username must be between 4 to 15 characters').isLength({
+    // name
+    req.check('name', 'Name is required').notEmpty();
+    req.check('name', 'Name must be between 4 to 50 characters').isLength({
         min: 4,
-        max: 15
+        max: 50
     });
 
     // email
     req.check('email', 'Email is required').notEmpty();
     req.check('email', 'Email must be between 3 to 32 characters')
-    .matches(/.+\@.+\..+/)
+    .matches(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/)
     .withMessage('Invalid email')
     .isLength({
         min: 3,
@@ -48,6 +48,9 @@ exports.userSignUpValidator = (req, res, next) => {
     .isLength({ min: 6 })
     .matches(/\d/)
     .withMessage('Password must contain a number');
+
+    // user type
+    req.check('type', 'Account type is required').notEmpty();
 
     // check for errors
     const errors = req.validationErrors()

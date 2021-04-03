@@ -1,4 +1,7 @@
 const _ = require("lodash");
+const addressValidator = require('address-validator');
+const Address = addressValidator.Address;
+const phone = require('phone');
 const { sendEmail } = require("../helpers");
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
@@ -10,7 +13,29 @@ exports.signUp = async (req, res) => {
     if (userExists) return res.status(403).json({
         error: 'Email is taken. Please try another email :)'
     });
+
+    const address = new Address({
+        street: req.body.street,
+        city: req.body.city,
+        state: req.body.state,
+        country: req.body.country
+    });
+    _.omit(req.body, ['street', 'city', 'state', 'country']);
+
     const user = await new User(req.body);
+    user.address = address.toString();
+
+    // phone number
+    if (req.body.phone) {
+        if (!(phone(req.body.phone).length === 0)) {
+            user.phone = phone(req.body.phone)[0];
+        } else {
+            return res.status(403).json({
+                error: 'Invalid phone number'
+            });
+        }
+    }
+
     await user.save();
     res.status(200).json({ message: 'Signup successful!' });
 };
@@ -32,8 +57,8 @@ exports.signIn = (req, res) => {
         // generate cookie token based on user ID and jwt secret key
         const token = jwt.sign({ _id: user._id, role: user.role }, process.env.JWT_SECRET);
         res.cookie('t', token, {maxAge: 360000});
-        const { _id, username, email, role } = user;
-        return res.json({token, user: {_id, username, email, role}});
+        const { _id, name, email, role } = user;
+        return res.json({token, user: {_id, name, email, role, type, address, phone}});
     });
 };
 

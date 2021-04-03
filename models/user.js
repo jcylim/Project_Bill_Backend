@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const { ObjectId } = mongoose.Schema;
 
 const userSchema = new mongoose.Schema({
-    username: {
+    name: {
         type: String,
         trim: true,
         required: true
@@ -12,11 +12,27 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         trim: true,
+        lowercase: true,
         required: true
     },
     hashed_password: {
         type: String,
         required: true
+    },
+    type: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        required: true
+    },
+    address: {
+        type: String,
+        trim: true,
+        required: true
+    },
+    phone: {
+        type: String,
+        trim: true
     },
     salt: String,
     created: {

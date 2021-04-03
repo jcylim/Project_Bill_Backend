@@ -1,7 +1,9 @@
 const express = require('express');
 const { 
     userById, 
-    allUsers, 
+    allUsers,
+    allChefs,
+    allFoodSuppliers, 
     getUser, 
     updateUser, 
     deleteUser,
@@ -21,6 +23,8 @@ router.put('/user/follow', requireSignIn, addFollowing, addFollower);
 router.put('/user/unfollow', requireSignIn, removeFollowing, removeFollower);
 
 router.get('/users', allUsers);
+router.get('/chefs', allChefs);
+router.get('/foodSuppliers', allFoodSuppliers);
 router.get('/user/:userId', requireSignIn, getUser);
 router.put('/user/:userId', requireSignIn, hasAuthorization, updateUser);
 router.delete('/user/:userId', requireSignIn, hasAuthorization, deleteUser);
