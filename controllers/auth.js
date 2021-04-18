@@ -57,7 +57,7 @@ exports.signIn = (req, res) => {
         // generate cookie token based on user ID and jwt secret key
         const token = jwt.sign({ _id: user._id, role: user.role }, process.env.JWT_SECRET);
         res.cookie('t', token, {maxAge: 360000});
-        const { _id, name, email, role } = user;
+        const { _id, name, email, role, type, address, phone } = user;
         return res.json({token, user: {_id, name, email, role, type, address, phone}});
     });
 };

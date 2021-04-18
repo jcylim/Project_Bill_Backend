@@ -25,7 +25,7 @@ exports.getPosts = (req, res) => {
     .populate('postedBy', '_id name role')
     .populate('comments', 'text created')
     .populate('comments.postedBy', '_id name')
-    .select('_id title body created updated likes')
+    .select('_id title body created updated comments likes')
     .sort({ created: -1 })
     .then(posts => {
         res.json(posts);
