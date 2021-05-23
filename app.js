@@ -26,7 +26,7 @@ const authRouter = require('./routes/auth');
 const userRouter = require('./routes/user');
 
 // API docs
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     fs.readFile('./docs/apiDocs.json', (err, data) => {
         if (err) {
             res.status(400).json({
@@ -44,9 +44,9 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(expressValidator());
 app.use(cors());
-app.use('/', postRouter);
-app.use('/', authRouter);
-app.use('/', userRouter);
+app.use('/api', postRouter);
+app.use('/api', authRouter);
+app.use('/api', userRouter);
 app.use(function (err, req, res, next) {
     if (err.name === 'UnauthorizedError') {
       res.status(401).json({error: 'Unauthorized to access this page'});

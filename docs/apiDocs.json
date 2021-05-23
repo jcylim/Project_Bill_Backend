@@ -4,8 +4,9 @@
     "/signin": "signin",
     "/signout": "signout",
     "/users": "get all users",
+    "/foodSuppliers": "get all food suppliers",
     "/user/:userId": "get/update/delete user",
-    "/posts": "get all posts",
+    "/posts": "get all produce posts",
     "/post/new/:userId": "create new post",
     "/posts/:userId": "get posts by user",
     "/post/:postId": "update/delete post"
