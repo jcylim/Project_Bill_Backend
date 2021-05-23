@@ -10,6 +10,14 @@ const postSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    price: {
+        type: Number,
+        default: 0
+    },
+    status: {
+        type: String,
+        default: 'ACTIVE'
+    },
     photo: {
         data: Buffer,
         contentType: String

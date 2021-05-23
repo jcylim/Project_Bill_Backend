@@ -2,12 +2,18 @@ const Post = require('../models/post');
 const formidable = require('formidable');
 const fs = require('fs');
 const _ = require('lodash');
+const uuidv1 = require('uuid/v1');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 
 exports.postById = (req, res, next, id) => {
     Post.findById(id)
         .populate('postedBy', '_id name role')
         .populate('comments.postedBy', '_id name')
-        .select('_id title body created likes comments role')
+        .select('_id title body price status created likes comments role photo')
         .exec((err, post) => {
             if (err || !post) {
                 return res.status(400).json({
@@ -25,7 +31,7 @@ exports.getPosts = (req, res) => {
     .populate('postedBy', '_id name role')
     .populate('comments', 'text created')
     .populate('comments.postedBy', '_id name')
-    .select('_id title body created updated comments likes')
+    .select('_id title body price status created updated comments likes')
     .sort({ created: -1 })
     .then(posts => {
         res.json(posts);
@@ -67,7 +73,7 @@ exports.createPost = (req, res, next) => {
 exports.postsByUser = (req, res) => {
     Post.find({postedBy: req.profile._id})
         .populate('postedBy', '_id name')
-        .select('_id title body created updated likes')
+        .select('_id title body price status created updated likes')
         .sort('_created')
         .exec((err, posts) => {
             if (err) {
@@ -83,9 +89,9 @@ exports.isPoster = (req, res, next) => {
     let sameUser = req.post && req.auth && req.post.postedBy._id == req.auth._id;
     let adminUser = req.post && req.auth && req.auth.role === "admin";
     
-    console.log("req.post", req.post, " req.auth ", req.auth);
-    console.log("sameUser?", sameUser);
-    console.log("adminUser?", adminUser);
+    // console.log("req.post", req.post, " req.auth ", req.auth);
+    // console.log("sameUser?", sameUser);
+    // console.log("adminUser?", adminUser);
 
     let isPoster = sameUser || adminUser;
     
@@ -214,4 +220,48 @@ exports.uncomment = (req, res) => {
             res.json(result);
         }
     });
+};
+
+exports.setPostStatus = (req, res) => {
+    const { status } = req.body;
+    let post = req.post;
+
+    post.status = status;
+    post.updated = Date.now();
+    post.save(err => {
+        if (err) {
+            return res.status(400).json({
+                error: "You are not authorized to perform this action"
+            });
+        }
+        res.status(200).json({ status, message: `Set post to ${status} status` });
+    });
+};
+
+exports.makePayment = (req, res) => {
+    const { token } = req.body;
+    let post = req.post;
+    const idempotencyKey = uuidv1();
+
+    return stripe.customers.create({
+        email: token.email,
+        source: token.id
+    })
+    .then(customer => {
+        stripe.charges.create({
+            amount: post.price * 100,
+            currency: 'usd',
+            customer: customer.id,
+            receipt_email: token.email,
+            description: `purchase of ${post.title}`
+            // shipping: {
+            //     name: token.card.name,
+            //     address: {
+            //         country: token.card.address_country
+            //     }
+            // }
+        }, {idempotencyKey})
+    })
+    .then(result => res.status(200).json(result))
+    .catch(err => res.status(400).json({ error: err }));
 };
