@@ -11,8 +11,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.postById = (req, res, next, id) => {
     Post.findById(id)
-        .populate('postedBy', '_id name role')
-        .populate('comments.postedBy', '_id name')
+        .populate('postedBy', '_id first_name last_name role')
+        .populate('comments.postedBy', '_id first_name last_name')
         .select('_id title body price status created likes comments role photo')
         .exec((err, post) => {
             if (err || !post) {
@@ -28,9 +28,9 @@ exports.postById = (req, res, next, id) => {
 
 exports.getPosts = (req, res) => {
     Post.find()
-    .populate('postedBy', '_id name role')
+    .populate('postedBy', '_id first_name last_name role')
     .populate('comments', 'text created')
-    .populate('comments.postedBy', '_id name')
+    .populate('comments.postedBy', '_id first_name last_name')
     .select('_id title body price status created updated comments likes')
     .sort({ created: -1 })
     .then(posts => {
@@ -72,7 +72,7 @@ exports.createPost = (req, res, next) => {
 
 exports.postsByUser = (req, res) => {
     Post.find({postedBy: req.profile._id})
-        .populate('postedBy', '_id name')
+        .populate('postedBy', '_id first_name last_name')
         .select('_id title body price status created updated likes')
         .sort('_created')
         .exec((err, posts) => {
@@ -192,8 +192,8 @@ exports.comment = (req, res) => {
         {$push: {comments: comment}}, 
         {new: true}
     )
-    .populate('comments.postedBy', '_id name')
-    .populate('postedBy', '_id name')
+    .populate('comments.postedBy', '_id first_name last_name')
+    .populate('postedBy', '_id first_name last_name')
     .exec((err, result) => {
         if (err) {
             return res.status(400).json({error: err});
@@ -211,8 +211,8 @@ exports.uncomment = (req, res) => {
         {$pull: {comments: { _id: comment._id }}}, 
         {new: true}
     )
-    .populate('comments.postedBy', '_id name')
-    .populate('postedBy', '_id name')
+    .populate('comments.postedBy', '_id first_name last_name')
+    .populate('postedBy', '_id first_name last_name')
     .exec((err, result) => {
         if (err) {
             return res.status(400).json({error: err});

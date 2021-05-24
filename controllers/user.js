@@ -6,8 +6,8 @@ const fs = require('fs');
 exports.userById = (req, res, next, id) => {
     User.findById(id)
     // populate followers and following users array
-    .populate('following', '_id name')
-    .populate('followers', '_id name')
+    .populate('following', '_id first_name last_name')
+    .populate('followers', '_id first_name last_name')
     .exec((err, user) => {
         if (err || !user) {
             return res.status(400).json({
@@ -39,7 +39,7 @@ exports.allUsers = (req, res) => {
         }
 
         res.json(users);
-    }).select('name email created updated role type address phone');
+    }).select('first_name last_name email created updated role type address phone');
 };
 
 exports.allChefs = (req, res) => {
@@ -53,7 +53,7 @@ exports.allChefs = (req, res) => {
         let chefs = users.filter(user => user.type === "chef");
 
         res.json(chefs);
-    }).select('name email created updated role type address phone');
+    }).select('first_name last_name email created updated role type address phone');
 };
 
 exports.allFoodSuppliers = (req, res) => {
@@ -67,7 +67,7 @@ exports.allFoodSuppliers = (req, res) => {
         let foodSuppliers = users.filter(user => user.type === "food supplier");
 
         res.json(foodSuppliers);
-    }).select('name email created updated role type address phone');
+    }).select('first_name last_name email created updated role type address phone');
 };
 
 exports.getUser = (req, res) => {
@@ -120,7 +120,7 @@ exports.deleteUser = (req, res) => {
                 error: err
             });
         }
-        res.json({message: `${user.name} has been removed from database!`});
+        res.json({message: `${user.first_name} ${user.last_name} has been removed from database!`});
     })
 };
 
@@ -144,8 +144,8 @@ exports.addFollowing = (req, res, next) => {
 
 exports.addFollower = (req, res) => {
     User.findByIdAndUpdate(req.body.followId, {$push: {followers: req.body.userId}}, {new: true})
-    .populate('following', '_id name')
-    .populate('followers', '_id name')
+    .populate('following', '_id first_name last_name')
+    .populate('followers', '_id first_name last_name')
     .exec((err, result) => {
         if (err) {
             return res.status(400).json({
@@ -169,8 +169,8 @@ exports.removeFollowing = (req, res, next) => {
 
 exports.removeFollower = (req, res) => {
     User.findByIdAndUpdate(req.body.unfollowId, {$pull: {followers: req.body.userId}}, {new: true})
-    .populate('following', '_id name')
-    .populate('followers', '_id name')
+    .populate('following', '_id first_name last_name')
+    .populate('followers', '_id first_name last_name')
     .exec((err, result) => {
         if (err) {
             return res.status(400).json({
@@ -193,5 +193,5 @@ exports.findPeople = (req, res) => {
             });
         }
         res.json(users);
-    }).select('name');
+    }).select('first_name last_name');
 };
