@@ -1,4 +1,7 @@
 const _ = require('lodash');
+const addressValidator = require('address-validator');
+const Address = addressValidator.Address;
+const phone = require('phone');
 const User = require('../models/user');
 const formidable = require('formidable');
 const fs = require('fs');
@@ -64,7 +67,7 @@ exports.allFoodSuppliers = (req, res) => {
             });
         }
 
-        let foodSuppliers = users.filter(user => user.type === "food supplier");
+        let foodSuppliers = users.filter(user => user.type === "local food supplier");
 
         res.json(foodSuppliers);
     }).select('first_name last_name email created updated role type address phone');
@@ -85,8 +88,41 @@ exports.updateUser = (req, res) => {
                 error: 'Photo could not be uploaded'
             });
         }
+        
         // save user
         let user = req.profile;
+        let street = user.address.split(',')[0].trim();
+        let city = user.address.split(',')[1].trim();
+        let state = user.address.split(',')[2].trim();
+        let country = user.address.split(',')[3].trim();
+
+        if (fields.street || fields.city || fields.state || fields.country) {
+            let newStreet = fields.street ? fields.street : street;
+            let newCity = fields.city ? fields.city : city;
+            let newState = fields.state ? fields.state : state;
+            let newCountry = fields.country ? fields.country : country;
+
+            const address = new Address({
+                street: newStreet,
+                city: newCity,
+                state: newState,
+                country: newCountry
+            });
+            _.omit(fields, ['street', 'city', 'state', 'country']);
+            fields.address = address.toString();
+        }
+    
+        // phone number
+        if (fields.phone) {
+            if (!(phone(fields.phone).length === 0)) {
+                fields.phone = phone(fields.phone)[0];
+            } else {
+                return res.status(403).json({
+                    error: 'Invalid phone number'
+                });
+            }
+        }
+
         // console.log("user in update: ", user);
         user = _.extend(user, fields);
  
