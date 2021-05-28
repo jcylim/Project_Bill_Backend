@@ -53,6 +53,8 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    // Stripe account ID to send payments obtained with Stripe Connect.
+    stripeAccountId: String,
     following: [{type: ObjectId, ref: 'User'}],
     followers: [{type: ObjectId, ref: 'User'}],
     resetPasswordLink: {

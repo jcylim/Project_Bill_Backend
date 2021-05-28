@@ -5,6 +5,10 @@ const phone = require('phone');
 const User = require('../models/user');
 const formidable = require('formidable');
 const fs = require('fs');
+const dotenv = require('dotenv');
+dotenv.config();
+
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.userById = (req, res, next, id) => {
     User.findById(id)
@@ -42,7 +46,7 @@ exports.allUsers = (req, res) => {
         }
 
         res.json(users);
-    }).select('first_name last_name email created updated role type address phone');
+    }).select('first_name last_name email created updated role type address phone stripeAccountId');
 };
 
 exports.allChefs = (req, res) => {
@@ -56,7 +60,7 @@ exports.allChefs = (req, res) => {
         let chefs = users.filter(user => user.type === "chef");
 
         res.json(chefs);
-    }).select('first_name last_name email created updated role type address phone');
+    }).select('first_name last_name email created updated role type address phone stripeAccountId');
 };
 
 exports.allFoodSuppliers = (req, res) => {
@@ -70,7 +74,7 @@ exports.allFoodSuppliers = (req, res) => {
         let foodSuppliers = users.filter(user => user.type === "local food supplier");
 
         res.json(foodSuppliers);
-    }).select('first_name last_name email created updated role type address phone');
+    }).select('first_name last_name email created updated role type address phone stripeAccountId');
 };
 
 exports.getUser = (req, res) => {
@@ -230,4 +234,100 @@ exports.findPeople = (req, res) => {
         }
         res.json(users);
     }).select('first_name last_name');
+};
+
+exports.paymentOnboarding = async (req, res, next) => {
+    let user = req.profile;
+    let refresh_url = `${process.env.CLIENT_URL}/payment/reauth`
+    let return_url = `${process.env.CLIENT_URL}`
+
+    if (!user.stripeAccountId) {
+        try {
+            // create express account
+            const account = await stripe.accounts.create({
+                type: 'express'
+            });
+
+            const accountLinks = await stripe.accountLinks.create({
+                account: account.id,
+                refresh_url: refresh_url,
+                return_url: return_url,
+                type: 'account_onboarding',
+            });
+
+            user.stripeAccountId = account.id;
+            // user.save(err => {
+            //     if (err) {
+            //         return res.status(400).json({
+            //             error: "You are not authorized to perform this action"
+            //         });
+            //     }
+            // });
+            await user.save();
+
+            return res.redirect('https://cors-anywhere.herokuapp.com/corsdemo/' + accountLinks.url);
+        } catch (err) {
+            console.log('The Stripe onboarding process has not succeeded.');
+            next(err);
+            //res.status(400).json({ error: err });
+        }
+    }
+
+    const account = await stripe.accounts.retrieve(
+        user.stripeAccountId
+    );
+
+    // if account is not able to charge money
+    if (!account.charges_enabled) {
+        console.log("user didn't complete the onboarding process");
+
+        try {
+            // create express account
+            // const account = await stripe.accounts.create({
+            //     type: 'express'
+            // });
+
+            // const accountLinks = await stripe.accountLinks.create({
+            //     account: account.id,
+            //     refresh_url: refresh_url,
+            //     return_url: return_url,
+            //     type: 'account_onboarding',
+            // });
+
+            // user.stripeAccountId = account.id;
+            // // user.save(err => {
+            // //     if (err) {
+            // //         return res.status(400).json({
+            // //             error: "You are not authorized to perform this action"
+            // //         });
+            // //     }
+            // // });
+            // await user.save();
+
+            return res.redirect('https://google.com');
+        } catch (err) {
+            console.log('The Stripe onboarding process has not succeeded.');
+            next(err);
+        }
+    }
+
+    //res.status(200).json({ message: `User onboarded with account ID: ${account.id}` });
+};
+
+exports.paymentAccountReauth = async (req, res) => {
+    const account = await stripe.accounts.create({
+        type: 'express'
+    });
+
+    let refresh_url = `${process.env.SERVER_URL}/payment/reauth`
+    let return_url = `${process.env.CLIENT_URL}`
+
+    const accountLinks = await stripe.accountLinks.create({
+        account: account.id,
+        refresh_url: refresh_url,
+        return_url: return_url,
+        type: 'account_onboarding',
+    });
+
+    res.send(`Go to this link for starting Stripe account onboarding process`);
 };

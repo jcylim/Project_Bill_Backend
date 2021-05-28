@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const expressValidator = require('express-validator');
+const emoji = require('node-emoji')
 const fs = require('fs');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -54,4 +55,4 @@ app.use(function (err, req, res, next) {
 });
 
 const port = process.env.PORT || 8080;
-app.listen(port, () => console.log(`Node API is listening on port: ${port}`));
+app.listen(port, () => console.log(`${emoji.get('avocado')}${emoji.get('house')}${emoji.get('apple')} Homely API is listening on port: ${port}`));

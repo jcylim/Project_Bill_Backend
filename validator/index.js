@@ -27,15 +27,15 @@ exports.createPostValidator = (req, res, next) => {
 exports.userSignUpValidator = (req, res, next) => {
     // first name
     req.check('first_name', 'First name is required').notEmpty();
-    req.check('first_name', 'First name must be between 4 to 50 characters').isLength({
-        min: 4,
+    req.check('first_name', 'First name must be between 2 to 50 characters').isLength({
+        min: 2,
         max: 50
     });
 
     // last name
     req.check('last_name', 'Last name is required').notEmpty();
-    req.check('last_name', 'Last name must be between 4 to 50 characters').isLength({
-        min: 4,
+    req.check('last_name', 'Last name must be between 2 to 50 characters').isLength({
+        min: 2,
         max: 50
     });
 
