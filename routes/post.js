@@ -14,7 +14,8 @@ const {
     comment,
     uncomment,
     setPostStatus,
-    makePayment
+    makePayment,
+    sendSellerEmail
 } = require('../controllers/post');
 const { requireSignIn } = require('../controllers/auth');
 const { userById } = require('../controllers/user');
@@ -45,6 +46,7 @@ router.get('/post/photo/:postId', photo);
 
 // Stripe Payment Mechanism
 router.post('/post/payment/:postId', requireSignIn, makePayment);
+router.put('/post/payment/emailConfirmation/:postId', requireSignIn, sendSellerEmail);
 
 // any route containing userId, our will first execute userById()
 router.param('userId', userById);

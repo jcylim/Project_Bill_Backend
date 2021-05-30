@@ -6,13 +6,15 @@ const uuidv1 = require('uuid/v1');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const { sendEmail } = require("../helpers");
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 
 exports.postById = (req, res, next, id) => {
     Post.findById(id)
-        .populate('postedBy', '_id first_name last_name role stripeAccountId')
-        .populate('comments.postedBy', '_id first_name last_name')
+        .populate('postedBy', '_id first_name last_name role email stripeAccountId')
+        .populate('comments.postedBy', '_id first_name last_name email')
         .select('_id title body price status created likes comments role photo')
         .exec((err, post) => {
             if (err || !post) {
@@ -28,9 +30,9 @@ exports.postById = (req, res, next, id) => {
 
 exports.getPosts = (req, res) => {
     Post.find()
-    .populate('postedBy', '_id first_name last_name role')
+    .populate('postedBy', '_id first_name last_name email role')
     .populate('comments', 'text created')
-    .populate('comments.postedBy', '_id first_name last_name')
+    .populate('comments.postedBy', '_id first_name last_name email')
     .select('_id title body price status created updated comments likes')
     .sort({ created: -1 })
     .then(posts => {
@@ -72,7 +74,7 @@ exports.createPost = (req, res, next) => {
 
 exports.postsByUser = (req, res) => {
     Post.find({postedBy: req.profile._id})
-        .populate('postedBy', '_id first_name last_name')
+        .populate('postedBy', '_id first_name last_name email')
         .select('_id title body price status created updated likes stripeAccountId')
         .sort('_created')
         .exec((err, posts) => {
@@ -192,8 +194,8 @@ exports.comment = (req, res) => {
         {$push: {comments: comment}}, 
         {new: true}
     )
-    .populate('comments.postedBy', '_id first_name last_name')
-    .populate('postedBy', '_id first_name last_name')
+    .populate('comments.postedBy', '_id first_name last_name email')
+    .populate('postedBy', '_id first_name last_name email')
     .exec((err, result) => {
         if (err) {
             return res.status(400).json({error: err});
@@ -211,8 +213,8 @@ exports.uncomment = (req, res) => {
         {$pull: {comments: { _id: comment._id }}}, 
         {new: true}
     )
-    .populate('comments.postedBy', '_id first_name last_name')
-    .populate('postedBy', '_id first_name last_name')
+    .populate('comments.postedBy', '_id first_name last_name email')
+    .populate('postedBy', '_id first_name last_name email')
     .exec((err, result) => {
         if (err) {
             return res.status(400).json({error: err});
@@ -285,4 +287,24 @@ exports.makePayment = async (req, res) => {
         res.status(400).json({ error: err })
     });
     
+};
+
+exports.sendSellerEmail = (req, res) => {
+    let { consumer } = req.body;
+    let post = req.post;
+    const email = post.postedBy.email;
+
+    // seller email data
+    const emailData = {
+        from: "noreply@workflow.com",
+        to: email,
+        subject: "Produce purchase on Homely",
+        text: `${consumer.first_name} ${consumer.last_name} just purchased "${post.title}" from you! Reach out to him/her via 
+        ${consumer.email}${consumer.phone ? " or " + consumer.phone + "!" : "!"} Thanks for using Homely! 😊`,
+        html: `<p>${consumer.first_name} ${consumer.last_name} just purchased "${post.title}" from you! Reach out to him/her via 
+        ${consumer.email}${consumer.phone ? " or " + consumer.phone + "!" : "!"}</p> <p>Thanks for using Homely! 😊</p>`
+    };
+
+    sendEmail(emailData);
+    res.status(200).json({ message: `Email already sent to ${email}!` });
 };

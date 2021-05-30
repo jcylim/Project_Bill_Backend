@@ -71,19 +71,21 @@ const handleSuccessfulPaymentIntent = paymentIntent => {
     // Fulfill the purchase.
     console.log(`💸 PaymentIntent (${paymentIntent.id}): ${paymentIntent.status}`);
 
+    const email = paymentIntent.receipt_email;
+
     // buyer email data
     const emailData = {
         from: "noreply@homely.com",
-        to: paymentIntent.receipt_email,
+        to: email,
         subject: "Your receipt from Homely",
         text: `You have just completed your purchase of a produce from Homely for $${paymentIntent.amount / 100}. The seller will contact you with further details!
         Thanks for using Homely! 😊`,
-        html: `<p>You have just completed your purchase of a produce from Homely for $${paymentIntent.amount / 100}. The seller will contact you with further details!
-        Thanks for using Homely! 😊</p>`
+        html: `<p>You have just completed your purchase of a produce from Homely for $${paymentIntent.amount / 100}. The seller will contact you with further details!</p> 
+        <p>Thanks for using Homely! 😊</p>`
     };
 
     sendEmail(emailData);
-    console.log(`Email already sent to ${paymentIntent.receipt_email}!`)
+    console.log(`Email already sent to ${email}!`)
 }
 
 // API docs
