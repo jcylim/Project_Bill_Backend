@@ -238,96 +238,93 @@ exports.findPeople = (req, res) => {
 
 exports.paymentOnboarding = async (req, res, next) => {
     let user = req.profile;
-    let refresh_url = `${process.env.CLIENT_URL}/payment/reauth`
-    let return_url = `${process.env.CLIENT_URL}`
+    let refresh_url = `${process.env.API_URL}/payment/reauth/${user._id}`
+    let return_url = `${process.env.CLIENT_URL}/user/${user._id}`
 
-    if (!user.stripeAccountId) {
-        try {
-            // create express account
-            const account = await stripe.accounts.create({
-                type: 'express'
-            });
+    try {
+        // create express account
+        const account = await stripe.accounts.create({
+            type: 'express'
+        });
 
-            const accountLinks = await stripe.accountLinks.create({
-                account: account.id,
-                refresh_url: refresh_url,
-                return_url: return_url,
-                type: 'account_onboarding',
-            });
+        const accountLinks = await stripe.accountLinks.create({
+            account: account.id,
+            refresh_url: refresh_url,
+            return_url: return_url,
+            type: 'account_onboarding',
+        });
 
-            user.stripeAccountId = account.id;
-            // user.save(err => {
-            //     if (err) {
-            //         return res.status(400).json({
-            //             error: "You are not authorized to perform this action"
-            //         });
-            //     }
-            // });
-            await user.save();
+        user.stripeAccountId = account.id;
+        user.save(err => {
+            if (err) {
+                return res.status(400).json({
+                    error: "You are not authorized to perform this action"
+                });
+            }
+        });
 
-            return res.redirect('https://cors-anywhere.herokuapp.com/corsdemo/' + accountLinks.url);
-        } catch (err) {
-            console.log('The Stripe onboarding process has not succeeded.');
-            next(err);
-            //res.status(400).json({ error: err });
-        }
+        res.status(200).json({ url: accountLinks.url });
+    } catch (err) {
+        console.log('Stripe onboarding process has not succeeded.');
+        res.status(400).json({ error: err.message });
     }
-
-    const account = await stripe.accounts.retrieve(
-        user.stripeAccountId
-    );
-
-    // if account is not able to charge money
-    if (!account.charges_enabled) {
-        console.log("user didn't complete the onboarding process");
-
-        try {
-            // create express account
-            // const account = await stripe.accounts.create({
-            //     type: 'express'
-            // });
-
-            // const accountLinks = await stripe.accountLinks.create({
-            //     account: account.id,
-            //     refresh_url: refresh_url,
-            //     return_url: return_url,
-            //     type: 'account_onboarding',
-            // });
-
-            // user.stripeAccountId = account.id;
-            // // user.save(err => {
-            // //     if (err) {
-            // //         return res.status(400).json({
-            // //             error: "You are not authorized to perform this action"
-            // //         });
-            // //     }
-            // // });
-            // await user.save();
-
-            return res.redirect('https://google.com');
-        } catch (err) {
-            console.log('The Stripe onboarding process has not succeeded.');
-            next(err);
-        }
-    }
-
-    //res.status(200).json({ message: `User onboarded with account ID: ${account.id}` });
 };
 
 exports.paymentAccountReauth = async (req, res) => {
-    const account = await stripe.accounts.create({
-        type: 'express'
+    let user = req.profile;
+    let refresh_url = `${process.env.API_URL}/payment/reauth/${user._id}`
+    let return_url = `${process.env.CLIENT_URL}/user/${user._id}`
+    let url = ""
+
+    try {
+        // create express account
+        const account = await stripe.accounts.create({
+            type: 'express'
+        });
+
+        const accountLinks = await stripe.accountLinks.create({
+            account: account.id,
+            refresh_url: refresh_url,
+            return_url: return_url,
+            type: 'account_onboarding'
+        });
+
+        user.stripeAccountId = account.id;
+        user.save(err => {
+            if (err) {
+                return res.status(400).json({
+                    error: "You are not authorized to perform this action"
+                });
+            }
+        });
+
+        url = accountLinks.url;
+    } catch (err) {
+        console.log('Stripe onboarding process has not succeeded.');
+        res.status(400).json({ error: err.message });
+    }
+
+    res.render('reauthPage', {
+        title: 'Homely Stripe Account Setup Reauth Page',
+        body: `Go to the following link to continue Stripe account onboarding process: ${url}`
     });
+};
 
-    let refresh_url = `${process.env.SERVER_URL}/payment/reauth`
-    let return_url = `${process.env.CLIENT_URL}`
+exports.checkStripeOnboardStatus = async (req, res) => {
+    let user = req.profile;
+    let isOnboarded = false;
 
-    const accountLinks = await stripe.accountLinks.create({
-        account: account.id,
-        refresh_url: refresh_url,
-        return_url: return_url,
-        type: 'account_onboarding',
-    });
+    if (user.stripeAccountId) {
+        try {
+            const account = await stripe.accounts.retrieve(
+                user.stripeAccountId
+            );
+            isOnboarded = account.charges_enabled;
+        } catch (err) {
+            console.log('Stripe onboarding process has not succeeded.');
+            res.status(400).json({ error: err.message });
+        }
+    }
 
-    res.send(`Go to this link for starting Stripe account onboarding process`);
+    res.status(200).json({isOnboarded});
 };

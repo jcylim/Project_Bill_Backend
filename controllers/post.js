@@ -11,7 +11,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.postById = (req, res, next, id) => {
     Post.findById(id)
-        .populate('postedBy', '_id first_name last_name role')
+        .populate('postedBy', '_id first_name last_name role stripeAccountId')
         .populate('comments.postedBy', '_id first_name last_name')
         .select('_id title body price status created likes comments role photo')
         .exec((err, post) => {
@@ -73,7 +73,7 @@ exports.createPost = (req, res, next) => {
 exports.postsByUser = (req, res) => {
     Post.find({postedBy: req.profile._id})
         .populate('postedBy', '_id first_name last_name')
-        .select('_id title body price status created updated likes')
+        .select('_id title body price status created updated likes stripeAccountId')
         .sort('_created')
         .exec((err, posts) => {
             if (err) {
@@ -238,30 +238,51 @@ exports.setPostStatus = (req, res) => {
     });
 };
 
-exports.makePayment = (req, res) => {
-    const { token } = req.body;
+exports.makePayment = async (req, res) => {
+    let convenienceFeePercent = 0.05; // charging 5% for convenience/application fee
+    let convenienceFee = 123; // charging $1.23 per transaction
+
+    const { consumer, seller } = req.body;
     let post = req.post;
     const idempotencyKey = uuidv1();
 
-    return stripe.customers.create({
-        email: token.email,
-        source: token.id
-    })
-    .then(customer => {
-        stripe.charges.create({
-            amount: post.price * 100,
-            currency: 'usd',
-            customer: customer.id,
-            receipt_email: token.email,
-            description: `purchase of ${post.title}`
-            // shipping: {
-            //     name: token.card.name,
-            //     address: {
-            //         country: token.card.address_country
-            //     }
-            // }
-        }, {idempotencyKey})
-    })
-    .then(result => res.status(200).json(result))
-    .catch(err => res.status(400).json({ error: err }));
+    // return stripe.customers.create({
+    //     email: token.email,
+    //     source: token.id
+    // })
+    // .then(customer => {
+    //     stripe.charges.create({
+    //         amount: post.price * 100,
+    //         currency: 'usd',
+    //         customer: customer.id,
+    //         receipt_email: token.email,
+    //         description: `purchase of ${post.title}`
+    //         // shipping: {
+    //         //     name: token.card.name,
+    //         //     address: {
+    //         //         country: token.card.address_country
+    //         //     }
+    //         // }
+    //     }, {idempotencyKey})
+    // })
+    // .then(result => res.status(200).json(result))
+    // .catch(err => res.status(400).json({ error: err }));
+
+    await stripe.paymentIntents.create({
+        payment_method_types: ['card'],
+        amount: post.price * 100,
+        currency: 'usd',
+        receipt_email: consumer.email,
+        //application_fee_amount: post.price * 100 * convenienceFeePercent,
+        application_fee_amount: convenienceFee,
+        transfer_data: {
+          destination: seller.stripeAccountId,
+        },
+    }, {idempotencyKey})
+    .then(result => res.status(200).json({ client_secret: result.client_secret }))
+    .catch(err => {
+        console.log(`error: ${err}`);
+        res.status(400).json({ error: err })
+    });
+    
 };

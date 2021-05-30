@@ -15,7 +15,8 @@ const {
     findPeople,
     hasAuthorization,
     paymentOnboarding,
-    paymentAccountReauth 
+    paymentAccountReauth,
+    checkStripeOnboardStatus 
 } = require('../controllers/user');
 const { requireSignIn } = require('../controllers/auth');
 
@@ -39,7 +40,8 @@ router.get('/user/findpeople/:userId', requireSignIn, findPeople);
 
 // Stripe payment onboarding
 router.get('/payment/onboarding/:userId', requireSignIn, paymentOnboarding);
-router.get('/payment/reauth', requireSignIn, paymentAccountReauth);
+router.get('/payment/onboardStatus/:userId', requireSignIn, checkStripeOnboardStatus);
+router.get('/payment/reauth/:userId', paymentAccountReauth);
 
 // any route containing :userId, our app will first execute userById()
 router.param('userId', userById);
