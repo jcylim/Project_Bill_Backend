@@ -45,7 +45,7 @@ app.post('/api/payment/webhook', bodyParser.raw({type: 'application/json'}), (re
     const sig = req.headers['stripe-signature'];
   
     let event;    
-    const endpointSecret = 'whsec_ZIDWSstVgHSQntetmfXVMJH9IUTX5R27';
+    const endpointSecret = process.env.WEBHOOK_ENDPOINT_SECRET;
   
     try {
       event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
