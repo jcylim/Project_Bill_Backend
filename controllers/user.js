@@ -319,7 +319,7 @@ exports.checkStripeOnboardStatus = async (req, res) => {
             const account = await stripe.accounts.retrieve(
                 user.stripeAccountId
             );
-            isOnboarded = account.charges_enabled;
+            isOnboarded = account.charges_enabled && account.details_submitted;
         } catch (err) {
             console.log('Stripe onboarding process has not succeeded.');
             res.status(400).json({ error: err.message });
