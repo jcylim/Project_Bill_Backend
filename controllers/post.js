@@ -302,7 +302,7 @@ exports.sendSellerEmail = (req, res) => {
 
     // seller email data
     const emailData = {
-        from: "noreply@workflow.com",
+        from: "noreply@homely.com",
         to: email,
         subject: "Produce purchase on Homely",
         text: `${consumer.first_name} ${consumer.last_name} just purchased "${post.title}" from you! Reach out to him/her via 
