@@ -13,7 +13,7 @@ exports.sendEmail = emailData => {
             user: process.env.EMAIL,
             pass: process.env.PW
         },
-        from: "noreply@workflow.com"
+        from: "noreply@homely.com"
     });
     return (
         transporter

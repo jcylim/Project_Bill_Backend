@@ -51,6 +51,33 @@ exports.createPost = (req, res, next) => {
             });
         }
 
+        // post validations
+        const { title, body, price } = fields;
+ 
+        if (title.length < 4 || title.length > 150) {
+            return res.status(400).json({
+                error: 'Title must be between 4 to 150 characters'
+            });
+        }
+
+        if (body.length < 4 || body.length > 2000) {
+            return res.status(400).json({
+                error: 'Body must be between 4 to 2000 characters'
+            });
+        }
+
+        if (isNaN(price)) {
+            return res.status(400).json({
+                error: 'Price must be a number'
+            });
+        } else {
+            if (price < 1.23) {
+                return res.status(400).json({
+                    error: 'Price must be equal to or greater than $1.23'
+                });
+            }
+        }
+
         let post = new Post(fields);
         req.profile.hashed_password = undefined;
         req.profile.salt = undefined;
@@ -70,7 +97,7 @@ exports.createPost = (req, res, next) => {
         post.save((err, result) => {
             if (err) {
                 return res.status(400).json({
-                    error: 'Image could not be saved'
+                    error: 'Post could not be saved'
                 });
             }
             res.json(result);

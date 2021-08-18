@@ -12,7 +12,7 @@ const postSchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        default: 0
+        required: true
     },
     status: {
         type: String,
