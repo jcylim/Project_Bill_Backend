@@ -95,27 +95,43 @@ exports.updateUser = (req, res) => {
         
         // save user
         let user = req.profile;
-        let street = user.address.split(',')[0].trim();
-        let city = user.address.split(',')[1].trim();
-        let state = user.address.split(',')[2].trim();
-        let country = user.address.split(',')[3].trim();
 
-        if (fields.street || fields.city || fields.state || fields.country) {
-            let newStreet = fields.street ? fields.street : street;
-            let newCity = fields.city ? fields.city : city;
-            let newState = fields.state ? fields.state : state;
-            let newCountry = fields.country ? fields.country : country;
+        if (user.address) {
+            let street = user.address.split(',')[0].trim();
+            let city = user.address.split(',')[1].trim();
+            let state = user.address.split(',')[2].trim();
+            let country = user.address.split(',')[3].trim();
 
-            const address = new Address({
-                street: newStreet,
-                city: newCity,
-                state: newState,
-                country: newCountry
-            });
-            _.omit(fields, ['street', 'city', 'state', 'country']);
-            fields.address = address.toString();
+            if (fields.street || fields.city || fields.state || fields.country) {
+                let newStreet = fields.street ? fields.street : street;
+                let newCity = fields.city ? fields.city : city;
+                let newState = fields.state ? fields.state : state;
+                let newCountry = fields.country ? fields.country : country;
+
+                const address = new Address({
+                    street: newStreet,
+                    city: newCity,
+                    state: newState,
+                    country: newCountry
+                });
+
+                _.omit(fields, ['street', 'city', 'state', 'country']);
+                fields.address = address.toString();
+            }
+        } else {
+            if (fields.street || fields.city || fields.state || fields.country) {
+                const address = new Address({
+                    street: fields.street,
+                    city: fields.city,
+                    state: fields.state,
+                    country: fields.country
+                });
+
+                _.omit(fields, ['street', 'city', 'state', 'country']);
+                fields.address = address.toString();
+            }
         }
-    
+
         // phone number
         if (fields.phone) {
             if (!(phone(fields.phone).length === 0)) {
