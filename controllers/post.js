@@ -13,9 +13,9 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 exports.postById = (req, res, next, id) => {
     Post.findById(id)
-        .populate('postedBy', '_id first_name last_name role email stripeAccountId')
+        .populate('postedBy', '_id first_name last_name role email address phone stripeAccountId')
         .populate('comments.postedBy', '_id first_name last_name email')
-        .select('_id title body price status created likes comments role photo')
+        .select('_id title body price status created likes comments role photo address')
         .exec((err, post) => {
             if (err || !post) {
                 return res.status(400).json({
@@ -30,10 +30,10 @@ exports.postById = (req, res, next, id) => {
 
 exports.getPosts = (req, res) => {
     Post.find()
-    .populate('postedBy', '_id first_name last_name email role')
+    .populate('postedBy', '_id first_name last_name email role address phone')
     .populate('comments', 'text created')
     .populate('comments.postedBy', '_id first_name last_name email')
-    .select('_id title body price status created updated comments likes')
+    .select('_id title body price status created updated comments likes address')
     .sort({ created: -1 })
     .then(posts => {
         res.json(posts);
@@ -52,8 +52,8 @@ exports.createPost = (req, res, next) => {
         }
 
         // post validations
-        const { title, body, price } = fields;
- 
+        const { title, body, price, address, lat, lng } = fields;
+
         if (title.length < 4 || title.length > 150) {
             return res.status(400).json({
                 error: 'Title must be between 4 to 150 characters'
@@ -83,6 +83,16 @@ exports.createPost = (req, res, next) => {
         req.profile.salt = undefined;
         post.postedBy = req.profile;
 
+        // handle address details
+        if (address) {
+            let addressText = address;
+            let coordinates = { lat, lng };
+            _.omit(fields, ['address', 'lat', 'lng']);
+
+            post.address.text = addressText;
+            post.address.coordinates = coordinates;
+        }
+
         if (files.photo) {
             try {
                 post.photo.data = fs.readFileSync(files.photo.path);
@@ -107,8 +117,8 @@ exports.createPost = (req, res, next) => {
 
 exports.postsByUser = (req, res) => {
     Post.find({postedBy: req.profile._id})
-        .populate('postedBy', '_id first_name last_name email')
-        .select('_id title body price status created updated likes stripeAccountId')
+        .populate('postedBy', '_id first_name last_name email address phone')
+        .select('_id title body price status created updated likes stripeAccountId address')
         .sort('_created')
         .exec((err, posts) => {
             if (err) {
@@ -147,6 +157,17 @@ exports.updatePost = (req, res, next) => {
                 error: 'Photo could not be uploaded'
             });
         }
+
+        if (fields.address) {
+            const { address, lat, lng } = fields;
+
+            // handle address details
+            let addressText = address;
+            let coordinates = { lat, lng };
+            fields.address = {'text': addressText, coordinates};
+            _.omit(fields, ['lat', 'lng']);
+        }
+
         // save post
         let post = req.post;
         post = _.extend(post, fields);
@@ -333,9 +354,9 @@ exports.sendSellerEmail = (req, res) => {
         to: email,
         subject: "Produce purchase on Homely",
         text: `${consumer.first_name} ${consumer.last_name} just purchased "${post.title}" from you! Reach out to him/her via 
-        ${consumer.email}${consumer.phone ? " or " + consumer.phone + "!" : "!"} Thanks for using Homely! 😊`,
+        ${consumer.email}${consumer.phone ? " or " + consumer.phone + "!" : "!"} P.S.: Please expect 7-10 business days to receive your funds. Thanks for using Homely! 😊`,
         html: `<p>${consumer.first_name} ${consumer.last_name} just purchased "${post.title}" from you! Reach out to him/her via 
-        ${consumer.email}${consumer.phone ? " or " + consumer.phone + "!" : "!"}</p> <p>Thanks for using Homely! 😊</p>`
+        ${consumer.email}${consumer.phone ? " or " + consumer.phone + "!" : "!"}</p> <p><b>P.S.:</b> Please expect 7-10 business days to receive your funds.</p> <p>Thanks for using Homely! 😊</p>`
     };
 
     sendEmail(emailData);

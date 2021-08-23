@@ -14,16 +14,16 @@ exports.signUp = async (req, res) => {
         error: 'Email is taken. Please try another email :)'
     });
 
-    const address = new Address({
-        street: req.body.street,
-        city: req.body.city,
-        state: req.body.state,
-        country: req.body.country
-    });
-    _.omit(req.body, ['street', 'city', 'state', 'country']);
+    // const address = new Address({
+    //     street: req.body.street,
+    //     city: req.body.city,
+    //     state: req.body.state,
+    //     country: req.body.country
+    // });
+    // _.omit(req.body, ['street', 'city', 'state', 'country']);
 
     const user = await new User(req.body);
-    user.address = address.toString();
+    // user.address = address.toString();
 
     // phone number
     if (req.body.phone) {
@@ -99,7 +99,7 @@ exports.forgotPassword = (req, res) => {
  
         // email data
         const emailData = {
-            from: "noreply@workflow.com",
+            from: "noreply@homely.com",
             to: email,
             subject: "Password Reset Instructions",
             text: `Please use the following link to reset your password: ${

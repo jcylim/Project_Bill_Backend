@@ -14,6 +14,10 @@ const postSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    address: {
+        text: String,
+        coordinates: { lat: Number, lng: Number }
+    },
     status: {
         type: String,
         default: 'ACTIVE'
